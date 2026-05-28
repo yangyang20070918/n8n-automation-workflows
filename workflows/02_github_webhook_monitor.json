@@ -1,0 +1,357 @@
+{
+  "name": "GitHub Webhook Monitor",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "github-events",
+        "options": {}
+      },
+      "id": "webhook-github",
+      "name": "GitHub Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.headers['x-github-event'] }}",
+                    "rightValue": "push",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Push Event"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.headers['x-github-event'] }}",
+                    "rightValue": "issues",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Issue Event"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.headers['x-github-event'] }}",
+                    "rightValue": "pull_request",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PR Event"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "switch-event",
+      "name": "Route by Event Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "push-type",
+              "name": "event_type",
+              "value": "push",
+              "type": "string"
+            },
+            {
+              "id": "push-repo",
+              "name": "repository",
+              "value": "={{ $json.body.repository.full_name }}",
+              "type": "string"
+            },
+            {
+              "id": "push-branch",
+              "name": "branch",
+              "value": "={{ $json.body.ref }}",
+              "type": "string"
+            },
+            {
+              "id": "push-pusher",
+              "name": "pusher",
+              "value": "={{ $json.body.pusher.name }}",
+              "type": "string"
+            },
+            {
+              "id": "push-commits",
+              "name": "commit_count",
+              "value": "={{ $json.body.commits.length }}",
+              "type": "number"
+            },
+            {
+              "id": "push-message",
+              "name": "latest_commit_message",
+              "value": "={{ $json.body.head_commit.message }}",
+              "type": "string"
+            },
+            {
+              "id": "push-timestamp",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-push",
+      "name": "Format Push Event",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [740, 160]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "issue-type",
+              "name": "event_type",
+              "value": "issue",
+              "type": "string"
+            },
+            {
+              "id": "issue-action",
+              "name": "action",
+              "value": "={{ $json.body.action }}",
+              "type": "string"
+            },
+            {
+              "id": "issue-repo",
+              "name": "repository",
+              "value": "={{ $json.body.repository.full_name }}",
+              "type": "string"
+            },
+            {
+              "id": "issue-title",
+              "name": "issue_title",
+              "value": "={{ $json.body.issue.title }}",
+              "type": "string"
+            },
+            {
+              "id": "issue-user",
+              "name": "user",
+              "value": "={{ $json.body.issue.user.login }}",
+              "type": "string"
+            },
+            {
+              "id": "issue-url",
+              "name": "issue_url",
+              "value": "={{ $json.body.issue.html_url }}",
+              "type": "string"
+            },
+            {
+              "id": "issue-timestamp",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-issue",
+      "name": "Format Issue Event",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [740, 340]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "pr-type",
+              "name": "event_type",
+              "value": "pull_request",
+              "type": "string"
+            },
+            {
+              "id": "pr-action",
+              "name": "action",
+              "value": "={{ $json.body.action }}",
+              "type": "string"
+            },
+            {
+              "id": "pr-repo",
+              "name": "repository",
+              "value": "={{ $json.body.repository.full_name }}",
+              "type": "string"
+            },
+            {
+              "id": "pr-title",
+              "name": "pr_title",
+              "value": "={{ $json.body.pull_request.title }}",
+              "type": "string"
+            },
+            {
+              "id": "pr-user",
+              "name": "user",
+              "value": "={{ $json.body.pull_request.user.login }}",
+              "type": "string"
+            },
+            {
+              "id": "pr-url",
+              "name": "pr_url",
+              "value": "={{ $json.body.pull_request.html_url }}",
+              "type": "string"
+            },
+            {
+              "id": "pr-timestamp",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "format-pr",
+      "name": "Format PR Event",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [740, 520]
+    },
+    {
+      "parameters": {
+        "functionCode": "const items = $input.all();\nconst event = items[0].json;\n\nlet message = '';\nswitch(event.event_type) {\n  case 'push':\n    message = `🔀 Push to ${event.repository}\\nBranch: ${event.branch}\\nBy: ${event.pusher}\\nCommits: ${event.commit_count}\\nMessage: ${event.latest_commit_message}`;\n    break;\n  case 'issue':\n    message = `📋 Issue ${event.action}: ${event.issue_title}\\nRepo: ${event.repository}\\nBy: ${event.user}\\nURL: ${event.issue_url}`;\n    break;\n  case 'pull_request':\n    message = `🔃 PR ${event.action}: ${event.pr_title}\\nRepo: ${event.repository}\\nBy: ${event.user}\\nURL: ${event.pr_url}`;\n    break;\n}\n\nreturn [{ json: { ...event, notification_message: message } }];"
+      },
+      "id": "build-notification",
+      "name": "Build Notification",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1000, 340]
+    }
+  ],
+  "connections": {
+    "GitHub Webhook": {
+      "main": [
+        [
+          {
+            "node": "Route by Event Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Event Type": {
+      "main": [
+        [
+          {
+            "node": "Format Push Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format Issue Event",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Format PR Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Push Event": {
+      "main": [
+        [
+          {
+            "node": "Build Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Issue Event": {
+      "main": [
+        [
+          {
+            "node": "Build Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format PR Event": {
+      "main": [
+        [
+          {
+            "node": "Build Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "automation"
+    },
+    {
+      "name": "github"
+    }
+  ]
+}

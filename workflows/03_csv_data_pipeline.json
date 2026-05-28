@@ -1,0 +1,200 @@
+{
+  "name": "CSV Data Processing Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process-csv",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "webhook-csv",
+      "name": "Receive CSV",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "fromText",
+        "options": {
+          "delimiter": ","
+        }
+      },
+      "id": "csv-parse",
+      "name": "Parse CSV",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "not-empty-name",
+              "leftValue": "={{ $json.name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-empty",
+      "name": "Remove Empty Rows",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const items = $input.all();\n\nconst cleaned = items.map(item => {\n  const data = item.json;\n  const result = {};\n  \n  for (const [key, value] of Object.entries(data)) {\n    const cleanKey = key.trim().toLowerCase().replace(/\\s+/g, '_');\n    let cleanValue = typeof value === 'string' ? value.trim() : value;\n    \n    if (cleanKey.includes('email') && typeof cleanValue === 'string') {\n      cleanValue = cleanValue.toLowerCase();\n    }\n    \n    if (cleanKey.includes('phone') && typeof cleanValue === 'string') {\n      cleanValue = cleanValue.replace(/[^0-9+\\-]/g, '');\n    }\n    \n    if (cleanKey.includes('date') && typeof cleanValue === 'string') {\n      const parsed = new Date(cleanValue);\n      if (!isNaN(parsed.getTime())) {\n        cleanValue = parsed.toISOString().split('T')[0];\n      }\n    }\n    \n    result[cleanKey] = cleanValue;\n  }\n  \n  result['processed_at'] = new Date().toISOString();\n  \n  return { json: result };\n});\n\nreturn cleaned;"
+      },
+      "id": "clean-data",
+      "name": "Clean & Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "operation": "removeDuplicates",
+        "compare": "selectedFields",
+        "fieldsToCompare": {
+          "fields": [
+            {
+              "fieldName": "email"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "deduplicate",
+      "name": "Remove Duplicates",
+      "type": "n8n-nodes-base.itemLists",
+      "typeVersion": 3.1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const items = $input.all();\n\nconst stats = {\n  total_records: items.length,\n  processed_at: new Date().toISOString(),\n  fields: items.length > 0 ? Object.keys(items[0].json) : [],\n  sample_data: items.slice(0, 3).map(i => i.json)\n};\n\nconst allData = {\n  summary: stats,\n  records: items.map(i => i.json)\n};\n\nreturn [{ json: allData }];"
+      },
+      "id": "build-output",
+      "name": "Build JSON Output",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-result",
+      "name": "Return JSON Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1560, 300]
+    }
+  ],
+  "connections": {
+    "Receive CSV": {
+      "main": [
+        [
+          {
+            "node": "Parse CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse CSV": {
+      "main": [
+        [
+          {
+            "node": "Remove Empty Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Empty Rows": {
+      "main": [
+        [
+          {
+            "node": "Clean & Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean & Normalize": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Build JSON Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build JSON Output": {
+      "main": [
+        [
+          {
+            "node": "Return JSON Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "automation"
+    },
+    {
+      "name": "data-processing"
+    }
+  ]
+}
