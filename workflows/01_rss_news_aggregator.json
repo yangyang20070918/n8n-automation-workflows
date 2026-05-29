@@ -12,7 +12,24 @@
       "name": "Webhook Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [240, 300]
+      "position": [240, 140]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 400]
     },
     {
       "parameters": {
@@ -23,7 +40,7 @@
       "name": "RSS Feed Read",
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1,
-      "position": [460, 300]
+      "position": [500, 300]
     },
     {
       "parameters": {
@@ -35,7 +52,7 @@
       "name": "Limit to 10",
       "type": "n8n-nodes-base.itemLists",
       "typeVersion": 3.1,
-      "position": [680, 300]
+      "position": [720, 300]
     },
     {
       "parameters": {
@@ -73,11 +90,22 @@
       "name": "Format Output",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [900, 300]
+      "position": [940, 300]
     }
   ],
   "connections": {
     "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Feed Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
       "main": [
         [
           {
