@@ -3,24 +3,20 @@
   "nodes": [
     {
       "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "hours",
-              "hoursInterval": 6
-            }
-          ]
-        }
+        "httpMethod": "GET",
+        "path": "news-feed",
+        "responseMode": "lastNode",
+        "options": {}
       },
-      "id": "schedule-trigger",
-      "name": "Schedule Trigger",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
       "position": [240, 300]
     },
     {
       "parameters": {
-        "url": "https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja",
+        "url": "https://www.nhk.or.jp/rss/news/cat0.xml",
         "options": {}
       },
       "id": "rss-read",
@@ -28,35 +24,6 @@
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1,
       "position": [460, 300]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
-          "conditions": [
-            {
-              "id": "condition-1",
-              "leftValue": "={{ $json.title }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "isNotEmpty"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "id": "filter-node",
-      "name": "Filter Valid Items",
-      "type": "n8n-nodes-base.filter",
-      "typeVersion": 2,
-      "position": [680, 300]
     },
     {
       "parameters": {
@@ -68,7 +35,7 @@
       "name": "Limit to 10",
       "type": "n8n-nodes-base.itemLists",
       "typeVersion": 3.1,
-      "position": [900, 300]
+      "position": [680, 300]
     },
     {
       "parameters": {
@@ -106,35 +73,11 @@
       "name": "Format Output",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1120, 300]
-    },
-    {
-      "parameters": {
-        "respondWith": "allIncomingItems",
-        "options": {}
-      },
-      "id": "respond-webhook",
-      "name": "Respond to Webhook",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [1340, 140]
-    },
-    {
-      "parameters": {
-        "httpMethod": "GET",
-        "path": "news-feed",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "id": "webhook-trigger",
-      "name": "Webhook Trigger",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [240, 140]
+      "position": [900, 300]
     }
   ],
   "connections": {
-    "Schedule Trigger": {
+    "Webhook Trigger": {
       "main": [
         [
           {
@@ -146,17 +89,6 @@
       ]
     },
     "RSS Feed Read": {
-      "main": [
-        [
-          {
-            "node": "Filter Valid Items",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Filter Valid Items": {
       "main": [
         [
           {
@@ -172,28 +104,6 @@
         [
           {
             "node": "Format Output",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Format Output": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Webhook Trigger": {
-      "main": [
-        [
-          {
-            "node": "RSS Feed Read",
             "type": "main",
             "index": 0
           }
